@@ -220,6 +220,32 @@
       letter-spacing: 0;
     }
 
+    /* [-] remove-file buttons next to /ARTWORK and /AUDIO.
+       Dimmed and inert until a file is loaded. */
+    button.mark-btn {
+      background: transparent;
+      color: #000;
+      border: 1px solid transparent;
+      padding: 1px 4px;
+      margin: -2px -4px -2px 0;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0;
+      line-height: 1.2;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+    button.mark-btn:hover:not(:disabled),
+    button.mark-btn:focus-visible:not(:disabled) {
+      background: #000;
+      color: #fff;
+      border-color: #000;
+    }
+    button.mark-btn:disabled {
+      color: var(--muted);
+      opacity: 0.45;
+      cursor: default;
+    }
+
     .hint {
       color: var(--faint);
       font-size: 10px;
@@ -584,11 +610,23 @@
     #waveCanvas.is-tag { cursor: pointer; }
     #waveCanvas.is-panning { cursor: grabbing; }
 
+    .overview-label {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
     .wave-minimap {
       display: block;
       width: 100%;
-      height: 32px;
-      margin-top: 6px;
+      height: 48px;
+      margin-top: 4px;
       border-radius: 0;
       background: #e4e4e4;
       box-shadow: 0 0 0 1px #000;
@@ -649,6 +687,8 @@
     }
 
     button.loop-btn {
+      white-space: nowrap;
+      flex-shrink: 0;
       background: transparent;
       color: var(--muted);
       border-color: transparent;
@@ -678,7 +718,7 @@
       content: "[x] ";
     }
 
-    /* Ko-fi support link — outlined, glows #FF5500 on hover */
+    /* Ko-fi support link — outlined, glows #CFE4A9 on hover */
     a.kofi-btn {
       display: inline-flex;
       align-items: center;
@@ -693,11 +733,11 @@
     a.kofi-btn:hover, a.kofi-btn:focus-visible {
       background: #000;
       color: #fff;
-      border-color: #ff5500;
+      border-color: #cfe4a9;
       box-shadow:
-        0 0 0 1px #ff5500,
-        0 0 12px 3px rgba(255, 85, 0, 0.55),
-        0 0 28px 8px rgba(255, 85, 0, 0.28);
+        0 0 0 1px #cfe4a9,
+        0 0 12px 3px rgba(207, 228, 169, 0.55),
+        0 0 28px 8px rgba(207, 228, 169, 0.28);
       outline: none;
     }
     .kofi-short { display: none; }
@@ -706,9 +746,12 @@
       .kofi-short { display: inline; }
       .header-actions { gap: 6px; }
       .header-actions a.kofi-btn, .header-actions button { padding: 7px 8px; font-size: 0.78em; letter-spacing: 0.08em; }
+      /* Let the logo shrink so it never runs under the header buttons. */
+      .brand { flex: 1 1 0; }
+      .brand .brand-logo { flex-shrink: 1; min-width: 0; max-width: 100%; }
     }
 
-    /* Export video — green glow on hover and keyboard focus */
+    /* Export video — #4C833F green glow on hover and keyboard focus */
     button#recordBtn {
       transition: background 0.25s ease, border-color 0.25s ease, color 0.25s ease, box-shadow 0.25s ease;
     }
@@ -717,11 +760,11 @@
     button#recordBtn:focus-visible:not(:disabled) {
       background: #000;
       color: #fff;
-      border-color: #22c55e;
+      border-color: #4c833f;
       box-shadow:
-        0 0 0 1px #22c55e,
-        0 0 12px 3px rgba(34, 197, 94, 0.55),
-        0 0 28px 8px rgba(34, 197, 94, 0.28);
+        0 0 0 1px #4c833f,
+        0 0 12px 3px rgba(76, 131, 63, 0.55),
+        0 0 28px 8px rgba(76, 131, 63, 0.28);
       outline: none;
     }
 
@@ -746,7 +789,7 @@
     .export-progress-bar {
       height: 100%;
       width: 0%;
-      background: #22c55e;
+      background: #4c833f; /* matches the export button glow */
       border-radius: 0;
       transition: width 0.15s linear;
     }
@@ -844,7 +887,7 @@
     <aside class="panel">
       <p class="steps">UPLOAD ARTWORK → UPLOAD AUDIO → SET CLIP → EXPORT</p>
       <section class="block">
-        <h2>/ARTWORK <span class="mark">[-]</span></h2>
+        <h2>/ARTWORK <button type="button" class="mark-btn" id="artRemoveBtn" disabled aria-label="Remove artwork file" title="Remove file">[-]</button></h2>
         <label class="dropzone" id="artDrop" for="artInput">
           <strong>/IMPORT IMAGE</strong>
           <span id="artName">PNG, JPG, or WebP — printed on the label</span>
@@ -853,7 +896,7 @@
       </section>
 
       <section class="block">
-        <h2>/LABEL <span class="mark">[-]</span></h2>
+        <h2>/LABEL</h2>
         <div class="editor-wrap">
           <!--
             A still, circular preview of the label. Drag to pan the artwork,
@@ -874,19 +917,20 @@
       </section>
 
       <section class="block">
-        <h2>/AUDIO <span class="mark">[-]</span></h2>
+        <h2>/AUDIO <button type="button" class="mark-btn" id="audioRemoveBtn" disabled aria-label="Remove audio file" title="Remove file">[-]</button></h2>
         <label class="dropzone" id="audioDrop" for="audioInput">
           <strong>/IMPORT AUDIO</strong>
           <span id="audioName">MP3, WAV, FLAC, or any audio file the browser can play</span>
           <input id="audioInput" type="file" accept="audio/*" />
         </label>
         <div id="clipPanel" class="clip-panel" hidden>
-          <div class="clip-head">/CLIP <span class="mark">[-]</span></div>
+          <div class="clip-head">/CLIP</div>
           <div class="wave-toolbar">
             <button type="button" id="waveZoomOut" class="ghost" aria-label="Zoom out waveform" title="Zoom out">−</button>
             <button type="button" id="waveZoomIn" class="ghost" aria-label="Zoom in waveform" title="Zoom in">+</button>
             <button type="button" id="waveFit" class="ghost" title="Zoom to fit the whole track">/FIT</button>
             <button type="button" id="waveFitClip" class="ghost" title="Zoom to the selected clip">/FIT CLIP</button>
+            <button type="button" id="waveReset" class="ghost" title="Show the whole track and put the clip and playhead back to the start">/RESET VIEW</button>
             <label class="follow-toggle" title="Keep the playhead in view while playing">
               <input type="checkbox" id="followPlayhead" />
               <span>Follow playhead</span>
@@ -895,7 +939,8 @@
           <div class="waveform-wrap" id="waveWrap" tabindex="0" aria-label="Audio waveform. Pinch or use plus and minus to zoom, scroll sideways to pan. Drag the handles to set the start and end of the clip. Click inside the clip to move the playhead.">
             <canvas id="waveCanvas" width="608" height="352"></canvas>
           </div>
-          <canvas id="waveMinimap" class="wave-minimap" width="608" height="64" tabindex="0" aria-label="Track overview. Drag the window to scroll the waveform."></canvas>
+          <div class="overview-label"><span>/OVERVIEW · FULL TRACK</span><span class="overview-key">[ ] VIEW &nbsp;■ CLIP</span></div>
+          <canvas id="waveMinimap" class="wave-minimap" width="608" height="96" tabindex="0" aria-label="Whole-track overview. The box shows the zoomed area above and the dark band is the selected clip. Click or drag to move the view."></canvas>
           <div class="clip-times">
             <span>Start <strong id="clipStartValue">0:00.0</strong></span>
             <span>Clip <strong id="clipLengthValue">0:00.0</strong></span>
@@ -911,7 +956,7 @@
             <input id="clipEndSlider" type="range" min="0" max="1" step="0.01" value="1" disabled aria-label="Clip end point" />
             <input id="clipEndInput" class="time-input" type="text" spellcheck="false" disabled aria-label="Clip end time" value="0:00.0" />
           </div>
-          <p class="hint">Pinch or use +/− to zoom the waveform, and scroll sideways to pan. The selected clip must be between 15 seconds and 2 minutes (or the whole track, if it is shorter than 15 seconds). Playback and export use only this excerpt.</p>
+          <p class="hint">Pinch or use +/− to zoom the waveform, and scroll sideways to pan. The overview strip always shows the whole track: click or drag it to move the view, or press /RESET VIEW to start over. The selected clip must be between 15 seconds and 2 minutes (or the whole track, if it is shorter than 15 seconds). Playback and export use only this excerpt.</p>
         </div>
         <div class="transport" style="margin-top: 12px;">
           <button type="button" id="playBtn" class="icon" disabled aria-label="Play">
@@ -921,7 +966,7 @@
             </svg>
           </button>
           <input id="progressSlider" type="range" min="0" max="1000" step="1" value="0" disabled aria-label="Playback position within the clip" />
-          <button type="button" id="loopBtn" class="ghost loop-btn is-active" aria-pressed="true" title="Loop the selected clip" disabled>Loop</button>
+          <button type="button" id="loopBtn" class="ghost loop-btn is-active" aria-pressed="true" title="Loop the selected clip while previewing" disabled>Loop Preview</button>
         </div>
         <div class="times">
           <span id="timeCurrent">0:00.0</span>
@@ -930,7 +975,7 @@
       </section>
 
       <section class="block">
-        <h2>/ROTATION <span class="mark">[-]</span></h2>
+        <h2>/ROTATION</h2>
         <div class="row">
           <label for="rpmSlider">RPM</label>
           <input id="rpmSlider" type="range" min="0" max="78" step="0.01" value="33.33" />
@@ -947,7 +992,7 @@
       </section>
 
       <section class="block">
-        <h2>/FORMAT <span class="mark">[-]</span></h2>
+        <h2>/FORMAT</h2>
         <div class="seg" id="formatSeg" role="group" aria-label="Export frame size">
           <button type="button" data-format="vertical">Vertical<span class="sub">9:16 · 1080×1920</span></button>
           <button type="button" data-format="square" class="is-active">Square<span class="sub">1:1 · 1080×1080</span></button>
@@ -956,9 +1001,19 @@
         <p class="hint">The preview switches to this shape live. The exported video is rendered at the size shown, with just the spinning label — no UI.</p>
       </section>
 
+      <section class="block">
+        <h2>/FRAME RATE</h2>
+        <div class="seg" id="fpsSeg" role="group" aria-label="Export frame rate">
+          <button type="button" data-fps="24">24 FPS<span class="sub">Film</span></button>
+          <button type="button" data-fps="30" class="is-active">30 FPS<span class="sub">Standard</span></button>
+          <button type="button" data-fps="60">60 FPS<span class="sub">Smoothest</span></button>
+        </div>
+        <p class="hint">Frames per second of the exported video. 30 suits most socials; 60 makes the spin smoothest but the file is larger.</p>
+      </section>
+
 
       <section class="block">
-        <h2>/BACKGROUND <span class="mark">[-]</span></h2>
+        <h2>/BACKGROUND</h2>
         <div class="seg" id="bgSeg" role="group" aria-label="Frame background">
           <button type="button" data-bg="dark" class="is-active">Dark</button>
           <button type="button" data-bg="light">Light</button>
@@ -1075,8 +1130,14 @@
         },
         DEFAULT_FORMAT: "square",
 
+        // Export frame rate options. 30 is the default (it was the only
+        // rate before the selector existed). Video bitrate per rate: 24 and
+        // 30 share 8 Mbps; 60 gets 12 Mbps so the extra frames are not
+        // starved (not a straight 2×, since consecutive frames are similar).
+        FPS_OPTIONS: [24, 30, 60],
         EXPORT_FPS: 30,
         EXPORT_BITRATE: 8_000_000,
+        EXPORT_BITRATES: { 24: 8_000_000, 30: 8_000_000, 60: 12_000_000 },
 
         // Resolution of the offscreen sticker (higher = sharper label).
         LABEL_SIZE: 1024
@@ -1130,6 +1191,10 @@
       const waveZoomOut = document.getElementById("waveZoomOut");
       const waveFit = document.getElementById("waveFit");
       const waveFitClip = document.getElementById("waveFitClip");
+      const waveReset = document.getElementById("waveReset");
+      const artRemoveBtn = document.getElementById("artRemoveBtn");
+      const audioRemoveBtn = document.getElementById("audioRemoveBtn");
+      const fpsSeg = document.getElementById("fpsSeg");
       const followPlayheadEl = document.getElementById("followPlayhead");
       const loopBtn = document.getElementById("loopBtn");
       const exportProgress = document.getElementById("exportProgress");
@@ -1156,6 +1221,7 @@
         recorder: null,
         recordChunks: [],
         format: CONFIG.DEFAULT_FORMAT,
+        fps: CONFIG.EXPORT_FPS,  // export frame rate (24 / 30 / 60)
         background: CONFIG.DEFAULT_BACKGROUND,
         container: "mp4",       // always MP4; WebM only as a fallback where MP4 cannot be recorded
         clipStart: 0,
@@ -1242,6 +1308,14 @@
 
       function revoke(url) {
         if (url) URL.revokeObjectURL(url);
+      }
+
+      function exportFps() {
+        return CONFIG.FPS_OPTIONS.indexOf(state.fps) >= 0 ? state.fps : CONFIG.EXPORT_FPS;
+      }
+
+      function exportBitrate(fps) {
+        return CONFIG.EXPORT_BITRATES[fps || exportFps()] || CONFIG.EXPORT_BITRATE;
       }
 
       function currentFormat() {
@@ -1836,12 +1910,65 @@
           state.artwork = img;
           resetCrop();
           artName.textContent = file.name;
+          updateRecordButton();
           setStatus("Artwork loaded. Drag to position it on the label.", "ok");
         };
         img.onerror = function () {
           setStatus("Could not read that image. Try a PNG or JPG.", "error");
         };
         img.src = url;
+      }
+
+      const ART_NAME_DEFAULT = artName.textContent;
+      const AUDIO_NAME_DEFAULT = audioName.textContent;
+
+      // [-] next to /ARTWORK: back to the blank "UPLOAD ARTWORK" label.
+      function removeArtwork() {
+        if (!state.artwork) return;
+        state.artwork = null;
+        revoke(state.artUrl);
+        state.artUrl = null;
+        artInput.value = "";      // so choosing the same file again fires "change"
+        artName.textContent = ART_NAME_DEFAULT;
+        resetCrop();
+        updateRecordButton();
+        setStatus("Artwork removed.");
+      }
+
+      // [-] next to /AUDIO: stop playback, drop the track and its waveform,
+      // and go back to the empty upload state.
+      function removeAudio() {
+        if (!state.audioUrl || state.recording) return;
+        state.audioToken = (state.audioToken || 0) + 1; // ignore any decode still in flight
+        try { audioEl.pause(); } catch (e) {}
+        audioEl.removeAttribute("src");
+        try { audioEl.load(); } catch (e) {}
+        revoke(state.audioUrl);
+        state.audioUrl = null;
+        state.audioBuffer = null;
+        state.peaks = null;
+        state.peakBins = 0;
+        state.peakPyramid = null;
+        state.trackDuration = 0;
+        state.clipStart = 0;
+        state.clipEnd = 0;
+        state.viewStart = 0;
+        state.viewEnd = 0;
+        state.audioFileStem = "";
+        state.exportPlan = null;
+        audioInput.value = "";
+        audioName.textContent = AUDIO_NAME_DEFAULT;
+        playBtn.disabled = true;
+        progressSlider.disabled = true;
+        progressSlider.value = "0";
+        loopBtn.disabled = true;
+        timeCurrent.textContent = formatTimeFine(0);
+        timeDuration.textContent = formatTimeFine(0);
+        clipPanel.hidden = true;
+        updatePlayIcon();
+        syncClipUi();
+        updateRecordButton();
+        setStatus("Audio removed.");
       }
 
       function loadAudio(file) {
@@ -1865,6 +1992,7 @@
         state.viewStart = 0;
         state.viewEnd = 0;
         state.audioFileStem = audioStemFromName(file.name);
+        state.audioToken = (state.audioToken || 0) + 1;
         audioEl.src = url;
         audioEl.load();
         audioName.textContent = file.name;
@@ -1999,10 +2127,12 @@
           return;
         }
         if (!audioCtx) audioCtx = new AC();
+        const token = state.audioToken;
         file.arrayBuffer().then(function (raw) {
           // decodeAudioData may detach the buffer; give it a copy.
           return audioCtx.decodeAudioData(raw.slice(0));
         }).then(function (buffer) {
+          if (token !== state.audioToken) return; // removed or replaced meanwhile
           state.audioBuffer = buffer;
           state.trackDuration = buffer.duration;
           const pyramid = buildPeakPyramid(buffer);
@@ -2013,6 +2143,7 @@
           initClipFromDuration();
           setStatus("Audio loaded. Choose a 15s–2min clip, then press play or export.", "ok");
         }).catch(function (err) {
+          if (token !== state.audioToken) return;
           setStatus("Audio is playable, but the waveform could not be decoded" + (err && err.message ? (": " + err.message) : "."), "error");
         });
       }
@@ -2111,6 +2242,21 @@
         state.clipStart = 0;
         state.clipEnd = Math.min(dur, CONFIG.DEFAULT_CLIP);
         fitViewportToTrack();
+        syncClipUi();
+      }
+
+      // /RESET VIEW: the same defaults the app sets when audio loads.
+      // Whole track in view, clip at 0:00 for DEFAULT_CLIP seconds, and
+      // the playhead back at the clip start.
+      function resetClipView() {
+        const dur = trackDuration();
+        if (dur <= 0 || state.recording) return;
+        state.clipStart = 0;
+        state.clipEnd = Math.min(dur, CONFIG.DEFAULT_CLIP);
+        fitViewportToTrack();
+        if (state.audioUrl) {
+          try { audioEl.currentTime = state.clipStart; } catch (e) {}
+        }
         syncClipUi();
       }
 
@@ -2256,6 +2402,7 @@
         if (waveZoomOut) waveZoomOut.disabled = locked || span >= dur - 1e-4;
         if (waveFit) waveFit.disabled = locked;
         if (waveFitClip) waveFitClip.disabled = locked;
+        if (waveReset) waveReset.disabled = locked;
       }
 
       function waveLayout() {
@@ -2516,7 +2663,7 @@
       function drawMinimap() {
         if (!waveMinimap || !miniCtx) return;
         const cssW = Math.max(1, waveMinimap.clientWidth || 1);
-        const cssH = Math.max(1, waveMinimap.clientHeight || 32);
+        const cssH = Math.max(1, waveMinimap.clientHeight || 48);
         const dpr = Math.min(2, window.devicePixelRatio || 1);
         const bw = Math.max(1, Math.round(cssW * dpr));
         const bh = Math.max(1, Math.round(cssH * dpr));
@@ -2532,12 +2679,19 @@
         const dur = trackDuration();
         if (!dur) return;
 
+        const clipX0 = (state.clipStart / dur) * cssW;
+        const clipX1 = (state.clipEnd / dur) * cssW;
+        // Selected clip: a soft band behind the waveform.
+        t.fillStyle = "rgba(0, 0, 0, 0.10)";
+        t.fillRect(clipX0, 0, Math.max(1, clipX1 - clipX0), cssH);
+
+        // The whole track's waveform, always. Lighter outside the clip,
+        // solid inside it, so the selection reads at a glance.
         const bins = state.peakBins;
         const peaks = state.peaks;
         if (bins && peaks) {
           const mid = cssH / 2;
           const amp = cssH * 0.42;
-          t.fillStyle = "rgba(236, 236, 236, 0.55)";
           for (let x = 0; x < cssW; x++) {
             const i0 = Math.floor((x / cssW) * bins);
             const i1 = Math.max(i0 + 1, Math.floor(((x + 1) / cssW) * bins));
@@ -2550,23 +2704,38 @@
               if (hi > max) max = hi;
             }
             if (min > max) continue;
+            const inClip = x + 0.5 >= clipX0 && x + 0.5 <= clipX1;
+            t.fillStyle = inClip ? "rgba(0, 0, 0, 0.85)" : "rgba(0, 0, 0, 0.32)";
             t.fillRect(x, mid - max * amp, 1, Math.max(1, (max - min) * amp));
           }
         }
 
-        const clipX0 = (state.clipStart / dur) * cssW;
-        const clipX1 = (state.clipEnd / dur) * cssW;
-        t.fillStyle = "rgba(0, 0, 0, 0.08)";
-        t.fillRect(clipX0, 0, Math.max(1, clipX1 - clipX0), cssH);
+        // Clip edges.
+        t.fillStyle = "#000000";
+        t.fillRect(Math.round(clipX0), 0, 1, cssH);
+        t.fillRect(Math.max(0, Math.round(clipX1) - 1), 0, 1, cssH);
 
+        // Zoomed viewport: dim what is outside it and box what is inside.
         const vx0 = (state.viewStart / dur) * cssW;
         const vx1 = (state.viewEnd / dur) * cssW;
-        t.fillStyle = "rgba(236, 236, 236, 0.55)";
-        if (vx0 > 0) t.fillRect(0, 0, vx0, cssH);
-        if (vx1 < cssW) t.fillRect(vx1, 0, cssW - vx1, cssH);
+        const fullView = vx0 <= 0.5 && vx1 >= cssW - 0.5;
+        if (!fullView) {
+          t.fillStyle = "rgba(236, 236, 236, 0.55)";
+          if (vx0 > 0) t.fillRect(0, 0, vx0, cssH);
+          if (vx1 < cssW) t.fillRect(vx1, 0, cssW - vx1, cssH);
+        }
         t.strokeStyle = "#000000";
-        t.lineWidth = 1.25;
-        t.strokeRect(vx0 + 0.5, 0.5, Math.max(1, vx1 - vx0 - 1), cssH - 1);
+        t.lineWidth = fullView ? 1 : 2;
+        const bx0 = Math.max(1, vx0);
+        const bx1 = Math.min(cssW - 1, vx1);
+        t.strokeRect(bx0, 1, Math.max(2, bx1 - bx0), cssH - 2);
+
+        // Playhead.
+        if (state.audioUrl && isFinite(audioEl.currentTime)) {
+          const px = (audioEl.currentTime / dur) * cssW;
+          t.fillStyle = "#000000";
+          t.fillRect(px - 0.75, 0, 1.5, cssH);
+        }
       }
       function hitEdgeTag(clientX, clientY) {
         const rect = waveCanvas.getBoundingClientRect();
@@ -2898,11 +3067,11 @@
         return !!firstSupported(MP4_AAC_TYPES);
       }
 
-      async function pickWcVideoCodec(width, height) {
+      async function pickWcVideoCodec(width, height, fps) {
         for (let i = 0; i < WC_VIDEO_CODECS.length; i++) {
           const cfg = {
             codec: WC_VIDEO_CODECS[i], width: width, height: height,
-            bitrate: CONFIG.EXPORT_BITRATE, framerate: CONFIG.EXPORT_FPS,
+            bitrate: exportBitrate(fps), framerate: fps,
             avc: { format: "avc" }
           };
           try {
@@ -2944,7 +3113,7 @@
         const audioCodec = (ov && ov.audioCodec) || "mp4a.40.2";
         if (!state.wcBroken && state.audioBuffer && window.VideoEncoder && window.AudioEncoder &&
             window.VideoFrame && window.AudioData && window.Mp4Muxer && window.OfflineAudioContext) {
-          const v = await pickWcVideoCodec(fmt.width, fmt.height);
+          const v = await pickWcVideoCodec(fmt.width, fmt.height, exportFps());
           const a = v ? await pickWcAudioConfig(audioCodec) : null;
           if (v && a) return { mode: "wc", video: v, audio: a };
         }
@@ -2988,7 +3157,7 @@
       function beginWebCodecsRecording(plan) {
         const fmt = currentFormat();
         fitCanvasWrap();
-        const fps = CONFIG.EXPORT_FPS;
+        const fps = (plan.video && plan.video.framerate) || exportFps();
         const wc = {
           active: true, finishing: false, error: null,
           plan: plan, fmt: fmt, fps: fps,
@@ -3020,6 +3189,7 @@
           return;
         }
         state.wc = wc;
+        state.exportFpsUsed = fps;
         state.recorder = null;
         wcCaptureFrame(true);
         startRecordWatch();
@@ -3039,21 +3209,32 @@
         if (n <= wc.lastN) return;
         if (wc.lastN >= 0 && wc.venc.encodeQueueSize > 6) return; // encoder busy; hold the last frame longer
         const frameDur = Math.round(1e6 / wc.fps);
-        let frame;
-        try {
-          frame = new VideoFrame(canvas, { timestamp: Math.round(n * 1e6 / wc.fps), duration: frameDur });
-          const key = wc.lastKeyN < 0 || n - wc.lastKeyN >= wc.fps * 2;
-          if (key) wc.lastKeyN = n;
-          wc.venc.encode(frame, { keyFrame: key });
-          if (window.__dubplateStyle && window.__dubplateStyle.frameLog) {
-            window.__dubplateStyle.frameLog.push([n / wc.fps, t, state.angle, performance.now()]);
+        // The clock is the audio element, and frames are drawn on
+        // requestAnimationFrame. If the display refreshes slower than the
+        // export rate (e.g. 60 fps on a busy machine), or the encoder was
+        // busy, some frame slots are skipped. Fill them by repeating the
+        // current canvas so the file stays constant-frame-rate with
+        // evenly spaced timestamps. At most half a second per call.
+        let k = wc.lastN < 0 ? n : Math.max(wc.lastN + 1, n - Math.ceil(wc.fps / 2));
+        for (; k <= n; k++) {
+          let frame;
+          try {
+            frame = new VideoFrame(canvas, { timestamp: Math.round(k * 1e6 / wc.fps), duration: frameDur });
+            const key = wc.lastKeyN < 0 || k - wc.lastKeyN >= wc.fps * 2;
+            if (key) wc.lastKeyN = k;
+            wc.venc.encode(frame, { keyFrame: key });
+            if (window.__dubplateStyle && window.__dubplateStyle.frameLog) {
+              window.__dubplateStyle.frameLog.push([k / wc.fps, t, state.angle, performance.now()]);
+            }
+            wc.lastN = k;
+            wc.frames++;
+            if (k < n) wc.filled = (wc.filled || 0) + 1;
+          } catch (e) {
+            wc.error = wc.error || e;
+            break;
+          } finally {
+            if (frame) frame.close();
           }
-          wc.lastN = n;
-          wc.frames++;
-        } catch (e) {
-          wc.error = wc.error || e;
-        } finally {
-          if (frame) frame.close();
         }
       }
 
@@ -3127,6 +3308,7 @@
             setStatus("Recording was empty. Try again.", "error");
             return;
           }
+          state.lastWcFilled = wc.filled || 0;
           const note = wc.plan.audio.codec === "mp4a.40.2" ? "" : NON_AAC_NOTE;
           downloadExport(blob, "mp4", fmt, note);
         } catch (err) {
@@ -3149,6 +3331,8 @@
       function refreshFileTypeOptions() { /* export is always MP4 now */ }
 
       function updateRecordButton() {
+        if (artRemoveBtn) artRemoveBtn.disabled = !state.artwork;
+        if (audioRemoveBtn) audioRemoveBtn.disabled = state.recording || !state.audioUrl;
         if (!window.MediaRecorder) {
           recordBtn.disabled = true;
           recordBtn.title = "Video export is not supported in this browser.";
@@ -3160,6 +3344,9 @@
           ? "Stop recording and download the video"
           : "Record the spinning label with your selected clip, at the chosen frame size";
         formatSeg.querySelectorAll("button").forEach((b) => {
+          b.disabled = state.recording;
+        });
+        fpsSeg.querySelectorAll("button").forEach((b) => {
           b.disabled = state.recording;
         });
         if (clipStartSlider) {
@@ -3249,14 +3436,16 @@
         // Make sure the bitmap is the exact export size before capturing.
         fitCanvasWrap();
 
-        const canvasStream = canvas.captureStream(CONFIG.EXPORT_FPS);
+        const fps = exportFps();
+        state.exportFpsUsed = fps;
+        const canvasStream = canvas.captureStream(fps);
         const tracks = canvasStream.getVideoTracks();
         if (audioDest) {
           audioDest.stream.getAudioTracks().forEach((tr) => tracks.push(tr));
         }
         const combined = new MediaStream(tracks);
 
-        const options = { videoBitsPerSecond: CONFIG.EXPORT_BITRATE };
+        const options = { videoBitsPerSecond: exportBitrate(fps) };
         if (mime) options.mimeType = mime;
         try {
           state.recorder = new MediaRecorder(combined, options);
@@ -3318,6 +3507,15 @@
         fitCanvasWrap();
       }
 
+      function setFps(v) {
+        v = parseInt(v, 10);
+        if (CONFIG.FPS_OPTIONS.indexOf(v) < 0 || state.recording) return;
+        state.fps = v;
+        fpsSeg.querySelectorAll("button").forEach((b) => {
+          b.classList.toggle("is-active", parseInt(b.getAttribute("data-fps"), 10) === v);
+        });
+      }
+
       function setBackground(id) {
         if (id !== "dark" && id !== "light") return;
         state.background = id;
@@ -3332,8 +3530,14 @@
       window.__dubplateStyle = {
         getExportPlan: function () {
           const p = state.exportPlan;
-          return p ? { mode: p.mode, video: p.video && p.video.codec, audio: p.audio && p.audio.codec, sampleRate: p.audio && p.audio.sampleRate } : null;
+          return p ? { mode: p.mode, video: p.video && p.video.codec, audio: p.audio && p.audio.codec, sampleRate: p.audio && p.audio.sampleRate, fps: state.exportFpsUsed, bitrate: exportBitrate(state.exportFpsUsed) } : null;
         },
+        getFps: function () { return state.fps; },
+        setFps: function (v) { setFps(v); return state.fps; },
+        hasArtwork: function () { return !!state.artwork; },
+        hasAudio: function () { return !!state.audioUrl; },
+        resetView: function () { resetClipView(); return window.__dubplateStyle.getView(); },
+        lastWcFilled: function () { return state.lastWcFilled || 0; },
         getClip: function () {
           return {
             start: state.clipStart,
@@ -3494,6 +3698,7 @@
       audioEl.addEventListener("pause", updatePlayIcon);
       audioEl.addEventListener("timeupdate", onAudioTime);
       audioEl.addEventListener("loadedmetadata", () => {
+        if (!state.audioUrl) return;
         if (!(state.trackDuration > 0) && isFinite(audioEl.duration) && audioEl.duration > 0) {
           state.trackDuration = audioEl.duration;
           if (!(state.clipEnd > 0)) initClipFromDuration();
@@ -3578,6 +3783,7 @@
         updateWaveZoomButtons();
         drawWaveform();
       });
+      waveReset.addEventListener("click", resetClipView);
       followPlayheadEl.addEventListener("change", () => {
         state.followPlayhead = !!followPlayheadEl.checked;
         followPlayheadIfNeeded();
@@ -3705,6 +3911,14 @@
         const btn = e.target.closest("button[data-format]");
         if (btn) setFormat(btn.getAttribute("data-format"));
       });
+
+      fpsSeg.addEventListener("click", (e) => {
+        const btn = e.target.closest("button[data-fps]");
+        if (btn) setFps(btn.getAttribute("data-fps"));
+      });
+
+      artRemoveBtn.addEventListener("click", removeArtwork);
+      audioRemoveBtn.addEventListener("click", removeAudio);
 
       bgSeg.addEventListener("click", (e) => {
         const btn = e.target.closest("button[data-bg]");
