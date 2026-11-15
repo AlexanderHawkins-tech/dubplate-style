@@ -667,6 +667,92 @@
       opacity: 0.4;
     }
 
+
+    .bpm-block {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 12px;
+    }
+
+    .bpm-line,
+    .offset-line,
+    .bar-presets {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .bpm-line .clip-label,
+    .offset-line .clip-label,
+    .bar-presets .clip-label {
+      flex: 0 0 auto;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+    }
+
+    .bpm-line button,
+    .offset-line button,
+    .bar-presets button {
+      padding: 4px 8px;
+      font-size: 11px;
+      line-height: 1.2;
+      letter-spacing: 0.08em;
+      min-width: 28px;
+    }
+
+    .bar-presets button {
+      flex: 1;
+      min-width: 0;
+      padding-left: 0;
+      padding-right: 0;
+    }
+
+    .bar-presets button.is-active {
+      background: #000;
+      color: #fff;
+    }
+
+    .bpm-status {
+      margin-left: auto;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      white-space: nowrap;
+    }
+
+    input.bpm-input {
+      flex: 0 0 76px;
+      width: 76px;
+    }
+
+    .edit-mode { margin-top: 8px; }
+
+    .beats-tools {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .beats-tools[hidden] { display: none !important; }
+
+    .len-edit {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    input.length-input {
+      flex: 0 0 52px;
+      width: 52px;
+    }
+
+    input.length-input[hidden] { display: none !important; }
+
     .clip-panel[hidden] { display: none !important; }
 
     .clip-times {
@@ -951,6 +1037,38 @@
               <span>Follow playhead</span>
             </label>
           </div>
+          <div class="bpm-block" id="bpmBlock">
+            <div class="bpm-line">
+              <span class="clip-label">BPM</span>
+              <input id="bpmInput" class="time-input bpm-input" type="text" inputmode="decimal" spellcheck="false" autocomplete="off" disabled aria-label="Tempo in beats per minute" placeholder="—" />
+              <button type="button" id="bpmHalf" class="ghost" disabled title="Half tempo">/2</button>
+              <button type="button" id="bpmDouble" class="ghost" disabled title="Double tempo">×2</button>
+              <span class="bpm-status" id="bpmStatus"></span>
+            </div>
+            <div class="offset-line">
+              <span class="clip-label">Downbeat</span>
+              <button type="button" id="offsetBack" class="ghost" disabled aria-label="Nudge the first downbeat 10 milliseconds earlier" title="Nudge the first downbeat 10 ms earlier">−</button>
+              <input id="offsetInput" class="time-input bpm-input" type="text" inputmode="decimal" spellcheck="false" autocomplete="off" disabled aria-label="First downbeat, in seconds from the start of the file" value="0.000" />
+              <button type="button" id="offsetFwd" class="ghost" disabled aria-label="Nudge the first downbeat 10 milliseconds later" title="Nudge the first downbeat 10 ms later">+</button>
+            </div>
+          </div>
+          <div class="beats-tools" id="beatsTools" hidden>
+            <div class="seg" id="snapSeg" role="group" aria-label="Snap resolution">
+              <button type="button" data-snap="beat" class="is-active">Beat</button>
+              <button type="button" data-snap="bar">Bar</button>
+            </div>
+            <div class="bar-presets" role="group" aria-label="Clip length in bars">
+              <span class="clip-label">Bars</span>
+              <button type="button" class="ghost bar-preset" data-bars="4" title="4 bars">4</button>
+              <button type="button" class="ghost bar-preset" data-bars="8" title="8 bars">8</button>
+              <button type="button" class="ghost bar-preset" data-bars="16" title="16 bars">16</button>
+              <button type="button" class="ghost bar-preset" data-bars="32" title="32 bars">32</button>
+            </div>
+          </div>
+          <div class="edit-mode seg" id="editModeSeg" role="group" aria-label="Clip editing mode">
+            <button type="button" id="editModeTime" data-edit-mode="time" class="is-active">Time<span class="sub">Seconds</span></button>
+            <button type="button" id="editModeBeats" data-edit-mode="beats" disabled>Beats<span class="sub">Bars · 4/4</span></button>
+          </div>
           <div class="waveform-wrap" id="waveWrap" tabindex="0" aria-label="Audio waveform. Pinch or use plus and minus to zoom, scroll sideways to pan. Drag the handles to set the start and end of the clip. Click inside the clip to move the playhead.">
             <canvas id="waveCanvas" width="608" height="352"></canvas>
           </div>
@@ -958,7 +1076,7 @@
           <canvas id="waveMinimap" class="wave-minimap" width="608" height="96" tabindex="0" aria-label="Whole-track overview. The box shows the zoomed area above and the dark band is the selected clip. Click or drag to move the view."></canvas>
           <div class="clip-times">
             <span>Start <strong id="clipStartValue">0:00.0</strong></span>
-            <span>Clip <strong id="clipLengthValue">0:00.0</strong></span>
+            <span class="len-edit">Clip <strong id="clipLengthValue">0:00.0</strong><input id="clipLengthInput" class="time-input length-input" type="text" spellcheck="false" autocomplete="off" disabled hidden aria-label="Clip length in bars and beats" value="0.0" /></span>
             <span>End <strong id="clipEndValue">0:00.0</strong></span>
           </div>
           <div class="row" style="margin-top: 8px;">
@@ -971,7 +1089,8 @@
             <input id="clipEndSlider" type="range" min="0" max="1" step="0.01" value="1" disabled aria-label="Clip end point" />
             <input id="clipEndInput" class="time-input" type="text" spellcheck="false" disabled aria-label="Clip end time" value="0:00.0" />
           </div>
-          <p class="hint">Pinch or use +/− to zoom the waveform, and scroll sideways to pan. The overview strip always shows the whole track: click or drag it to move the view, or press /RESET VIEW to start over. The selected clip must be between 15 seconds and 2 minutes (or the whole track, if it is shorter than 15 seconds). Playback and export use only this excerpt.</p>
+          <p class="hint" id="clipHintTime">Pinch or use +/− to zoom the waveform, and scroll sideways to pan. The overview strip always shows the whole track: click or drag it to move the view, or press /RESET VIEW to start over. The selected clip must be between 15 seconds and 2 minutes (or the whole track, if it is shorter than 15 seconds). Playback and export use only this excerpt.</p>
+          <p class="hint" id="clipHintBeats" hidden>Beats mode snaps the clip to the beat or the bar. One 4/4 bar is 240 ÷ BPM seconds, and 4, 8, 16 and 32 set that many bars from the current start. The clip stays on the grid and is capped at 2 minutes. Playback and export use only this excerpt.</p>
         </div>
         <div class="transport" style="margin-top: 12px;">
           <button type="button" id="playBtn" class="icon" disabled aria-label="Play">
@@ -1200,6 +1319,21 @@
       const clipLengthValue = document.getElementById("clipLengthValue");
       const clipStartInput = document.getElementById("clipStartInput");
       const clipEndInput = document.getElementById("clipEndInput");
+      const clipLengthInput = document.getElementById("clipLengthInput");
+      const bpmInput = document.getElementById("bpmInput");
+      const bpmHalfBtn = document.getElementById("bpmHalf");
+      const bpmDoubleBtn = document.getElementById("bpmDouble");
+      const bpmStatus = document.getElementById("bpmStatus");
+      const offsetInput = document.getElementById("offsetInput");
+      const offsetBackBtn = document.getElementById("offsetBack");
+      const offsetFwdBtn = document.getElementById("offsetFwd");
+      const editModeSeg = document.getElementById("editModeSeg");
+      const editModeTimeBtn = document.getElementById("editModeTime");
+      const editModeBeatsBtn = document.getElementById("editModeBeats");
+      const beatsTools = document.getElementById("beatsTools");
+      const snapSeg = document.getElementById("snapSeg");
+      const clipHintTime = document.getElementById("clipHintTime");
+      const clipHintBeats = document.getElementById("clipHintBeats");
       const waveMinimap = document.getElementById("waveMinimap");
       const miniCtx = waveMinimap.getContext("2d");
       const waveZoomIn = document.getElementById("waveZoomIn");
@@ -1250,8 +1384,19 @@
         peakBins: 0,
         peakPyramid: null,      // multi-resolution peaks for crisp zoomed drawing
         loop: true,
-        audioBuffer: null
+        audioBuffer: null,
+        editMode: "time",       // "time" keeps seconds; "beats" snaps to the bar grid
+        snap: "beat",           // "beat" or "bar" while editMode is "beats"
+        bpm: 0,
+        beatOffset: 0,          // seconds of beat 1.1 (the first downbeat)
+        bpmEdited: false,       // true once the user types, halves, or doubles
+        bpmSource: ""           // "", "detecting", "detected", "edited", "none"
       };
+
+      const BEATS_PER_BAR = 4;
+      const BPM_MIN = 40;
+      const BPM_MAX = 300;
+      const OFFSET_NUDGE = 0.01;
 
       const LABEL_SIZE = CONFIG.LABEL_SIZE;
 
@@ -1971,6 +2116,7 @@
         state.viewEnd = 0;
         state.audioFileStem = "";
         state.exportPlan = null;
+        resetBeatState();
         audioInput.value = "";
         audioName.textContent = AUDIO_NAME_DEFAULT;
         playBtn.disabled = true;
@@ -2007,6 +2153,8 @@
         state.viewStart = 0;
         state.viewEnd = 0;
         state.audioFileStem = audioStemFromName(file.name);
+        resetBeatState();
+        state.bpmSource = "detecting";
         state.audioToken = (state.audioToken || 0) + 1;
         audioEl.src = url;
         audioEl.load();
@@ -2016,6 +2164,7 @@
         loopBtn.disabled = false;
         updateRecordButton();
         clipPanel.hidden = false;
+        syncBeatUi();
         setStatus("Decoding audio for the waveform…", "ok");
         decodeAudioForWaveform(file);
       }
@@ -2156,6 +2305,10 @@
           state.peaks = overview.peaks;
           state.peakBins = overview.bins;
           initClipFromDuration();
+          setStatus("Finding the tempo…", "ok");
+          const tempo = detectTempo(buffer);
+          if (token !== state.audioToken) return;
+          applyDetectedTempo(tempo);
           setStatus("Audio loaded. Choose a 15s–2min clip, then press play or export.", "ok");
         }).catch(function (err) {
           if (token !== state.audioToken) return;
@@ -2179,6 +2332,491 @@
         dur = dur == null ? trackDuration() : dur;
         if (dur <= 0) return 0;
         return Math.min(CONFIG.MAX_CLIP, dur);
+      }
+
+
+      // ----- BPM and bar grid ------------------------------------------------
+      // One 4/4 bar is 240/BPM seconds, so one beat is exactly a quarter of
+      // that. Clip edges in Beats mode are integer counts of the snap unit
+      // measured from the downbeat, which keeps an export of N bars at
+      // N * 240/BPM seconds.
+      function hasBeatGrid() {
+        return state.bpm >= BPM_MIN && state.bpm <= BPM_MAX && isFinite(state.beatOffset);
+      }
+
+      function beatsModeActive() {
+        return state.editMode === "beats" && hasBeatGrid();
+      }
+
+      function barSeconds() {
+        return 240 / state.bpm;
+      }
+
+      function beatSeconds() {
+        return barSeconds() / BEATS_PER_BAR;
+      }
+
+      function snapUnitSeconds() {
+        return state.snap === "bar" ? barSeconds() : beatSeconds();
+      }
+
+      function gridIndex(t, unit) {
+        return Math.round((t - state.beatOffset) / unit);
+      }
+
+      function gridTime(index, unit) {
+        return state.beatOffset + index * unit;
+      }
+
+      function minGridIndex(unit) {
+        return Math.ceil((0 - state.beatOffset - 1e-9) / unit);
+      }
+
+      function maxGridIndex(unit, dur) {
+        return Math.floor((dur - state.beatOffset + 1e-9) / unit);
+      }
+
+      function beatClipBounds(unit) {
+        const dur = trackDuration();
+        const maxLen = Math.min(CONFIG.MAX_CLIP, dur);
+        const minI = minGridIndex(unit);
+        const maxI = maxGridIndex(unit, dur);
+        const span = maxI - minI;
+        let maxUnits = Math.floor((maxLen + 1e-4) / unit);
+        if (span > 0) maxUnits = Math.min(maxUnits, span);
+        if (maxUnits < 1) maxUnits = Math.max(0, span);
+        return { dur: dur, minI: minI, maxI: maxI, maxUnits: maxUnits, unit: unit, span: span };
+      }
+
+      // Place the clip on the grid. lenUnits is in beats or bars, matching
+      // the current snap. A track shorter than one unit keeps the whole file.
+      function placeSnapped(startIdx, lenUnits) {
+        const unit = snapUnitSeconds();
+        const b = beatClipBounds(unit);
+        if (!(b.dur > 0) || b.span < 1 || b.maxUnits < 1) {
+          state.clipStart = 0;
+          state.clipEnd = b.dur;
+          constrainPlayheadToClip();
+          return;
+        }
+        lenUnits = Math.round(lenUnits);
+        if (lenUnits < 1) lenUnits = 1;
+        if (lenUnits > b.maxUnits) lenUnits = b.maxUnits;
+        let start = Math.round(startIdx);
+        let end = start + lenUnits;
+        if (end > b.maxI) {
+          end = b.maxI;
+          start = end - lenUnits;
+        }
+        if (start < b.minI) {
+          start = b.minI;
+          end = Math.min(b.maxI, start + lenUnits);
+        }
+        if (end <= start) end = Math.min(b.maxI, start + 1);
+        state.clipStart = gridTime(start, unit);
+        state.clipEnd = gridTime(end, unit);
+        if (state.clipStart < 0 && state.clipStart > -1e-4) state.clipStart = 0;
+        constrainPlayheadToClip();
+      }
+
+      function setClipStartSnapped(t) {
+        const unit = snapUnitSeconds();
+        const b = beatClipBounds(unit);
+        let endIdx = gridIndex(state.clipEnd, unit);
+        let startIdx = gridIndex(t, unit);
+        if (endIdx - startIdx > b.maxUnits) startIdx = endIdx - b.maxUnits;
+        if (endIdx - startIdx < 1) startIdx = endIdx - 1;
+        placeSnapped(startIdx, endIdx - startIdx);
+      }
+
+      function setClipEndSnapped(t) {
+        const unit = snapUnitSeconds();
+        const b = beatClipBounds(unit);
+        let startIdx = gridIndex(state.clipStart, unit);
+        let endIdx = gridIndex(t, unit);
+        if (endIdx - startIdx > b.maxUnits) endIdx = startIdx + b.maxUnits;
+        if (endIdx - startIdx < 1) endIdx = startIdx + 1;
+        placeSnapped(startIdx, endIdx - startIdx);
+      }
+
+      function setClipWindowSnapped(start, end) {
+        const unit = snapUnitSeconds();
+        let lenUnits = Math.round((end - start) / unit);
+        if (!isFinite(lenUnits) || lenUnits <= 0) lenUnits = 1;
+        placeSnapped(gridIndex(start, unit), lenUnits);
+      }
+
+      function setLengthFromStart(lenSeconds) {
+        const unit = snapUnitSeconds();
+        const lenUnits = Math.max(1, Math.round(lenSeconds / unit));
+        placeSnapped(gridIndex(state.clipStart, unit), lenUnits);
+      }
+
+      function applyClipStart(t) {
+        if (beatsModeActive()) setClipStartSnapped(t);
+        else setClipStart(t);
+      }
+
+      function applyClipEnd(t) {
+        if (beatsModeActive()) setClipEndSnapped(t);
+        else setClipEnd(t);
+      }
+
+      function applyClipWindow(start, end) {
+        if (beatsModeActive()) setClipWindowSnapped(start, end);
+        else setClipWindow(start, end);
+      }
+
+      function formatBarBeat(time) {
+        const beats = Math.round((time - state.beatOffset) / beatSeconds());
+        const bar = Math.floor(beats / BEATS_PER_BAR) + 1;
+        const beat = ((beats % BEATS_PER_BAR) + BEATS_PER_BAR) % BEATS_PER_BAR + 1;
+        return bar + "." + beat;
+      }
+
+      function formatLengthBarBeat(seconds) {
+        const beats = Math.max(0, Math.round(seconds / beatSeconds()));
+        const bars = Math.floor(beats / BEATS_PER_BAR);
+        const rem = beats % BEATS_PER_BAR;
+        return bars + "." + rem;
+      }
+
+      function formatPosition(time) {
+        return beatsModeActive() ? formatBarBeat(time) : formatTimeFine(time);
+      }
+
+      function formatLength(seconds) {
+        return beatsModeActive() ? formatLengthBarBeat(seconds) : formatTimeFine(seconds);
+      }
+
+      function parseBarBeatPosition(str) {
+        const s = String(str == null ? "" : str).trim();
+        let bar;
+        let beat;
+        const m = s.match(/^(-?\d+)\.(\d+)$/);
+        if (m) {
+          bar = parseInt(m[1], 10);
+          beat = parseInt(m[2], 10);
+          if (beat < 1 || beat > BEATS_PER_BAR) return null;
+        } else if (/^-?\d+$/.test(s)) {
+          bar = parseInt(s, 10);
+          beat = 1;
+        } else {
+          return null;
+        }
+        const index = (bar - 1) * BEATS_PER_BAR + (beat - 1);
+        return state.beatOffset + index * beatSeconds();
+      }
+
+      function parseLengthBarBeat(str) {
+        const s = String(str == null ? "" : str).trim();
+        let bars;
+        let rem;
+        if (/^\d+$/.test(s)) {
+          bars = parseInt(s, 10);
+          rem = 0;
+        } else {
+          const m = s.match(/^(\d+)\.(\d+)$/);
+          if (!m) return null;
+          bars = parseInt(m[1], 10);
+          rem = parseInt(m[2], 10);
+          if (rem < 0 || rem >= BEATS_PER_BAR) return null;
+        }
+        if (bars < 0) return null;
+        return (bars * BEATS_PER_BAR + rem) * beatSeconds();
+      }
+
+      // Clicks and loops usually land a few hundredths off an integer.
+      // Keep that integer so a 100 BPM track is 100, not 100.1. Anything
+      // further away stays at one decimal, which is what the field shows.
+      function quantizeDetectedBpm(bpm) {
+        const nearest = Math.round(bpm);
+        if (Math.abs(bpm - nearest) <= 0.15) return nearest;
+        return Math.round(bpm * 10) / 10;
+      }
+
+      function formatBpm(bpm) {
+        const n = Math.round(bpm * 10) / 10;
+        return n.toFixed(1);
+      }
+
+      function formatOffset(seconds) {
+        const n = Math.round(seconds * 1000) / 1000;
+        return n.toFixed(3);
+      }
+
+      function parseDecimal(str) {
+        const n = parseFloat(String(str == null ? "" : str).trim().replace(",", "."));
+        return isFinite(n) ? n : null;
+      }
+
+      function resetBeatState() {
+        state.editMode = "time";
+        state.snap = "beat";
+        state.bpm = 0;
+        state.beatOffset = 0;
+        state.bpmEdited = false;
+        state.bpmSource = "";
+      }
+
+      function syncBeatUi() {
+        const has = trackDuration() > 0 && !state.recording;
+        const grid = hasBeatGrid();
+        const beats = state.editMode === "beats" && grid;
+        if (bpmInput && document.activeElement !== bpmInput) {
+          bpmInput.value = grid ? formatBpm(state.bpm) : "";
+        }
+        if (offsetInput && document.activeElement !== offsetInput) {
+          offsetInput.value = formatOffset(state.beatOffset || 0);
+        }
+        bpmInput.disabled = !has;
+        offsetInput.disabled = !has || !grid;
+        offsetBackBtn.disabled = !has || !grid;
+        offsetFwdBtn.disabled = !has || !grid;
+        bpmHalfBtn.disabled = !has || !grid || !(state.bpm / 2 >= BPM_MIN - 1e-6);
+        bpmDoubleBtn.disabled = !has || !grid || !(state.bpm * 2 <= BPM_MAX + 1e-6);
+        editModeTimeBtn.disabled = !has;
+        editModeBeatsBtn.disabled = !has || !grid;
+        editModeTimeBtn.classList.toggle("is-active", state.editMode !== "beats");
+        editModeBeatsBtn.classList.toggle("is-active", state.editMode === "beats");
+        beatsTools.hidden = state.editMode !== "beats";
+        if (clipHintTime) clipHintTime.hidden = state.editMode === "beats";
+        if (clipHintBeats) clipHintBeats.hidden = state.editMode !== "beats";
+        snapSeg.querySelectorAll("button").forEach(function (b) {
+          b.classList.toggle("is-active", b.getAttribute("data-snap") === state.snap);
+          b.disabled = !has || !beats;
+        });
+        const lengthBars = grid ? (state.clipEnd - state.clipStart) / barSeconds() : 0;
+        document.querySelectorAll(".bar-preset").forEach(function (b) {
+          const bars = parseInt(b.getAttribute("data-bars"), 10);
+          const wanted = grid ? bars * barSeconds() : Infinity;
+          const fits = grid && wanted <= CONFIG.MAX_CLIP + 1e-3 && wanted <= trackDuration() + 1e-3;
+          b.disabled = !has || !beats || !fits;
+          b.classList.toggle("is-active", beats && fits && Math.abs(lengthBars - bars) < 0.02);
+        });
+        const statusText = {
+          detecting: "Detecting",
+          detected: "Detected",
+          edited: "Edited",
+          none: "Not found"
+        };
+        bpmStatus.textContent = statusText[state.bpmSource] || "";
+        if (clipLengthInput) clipLengthInput.hidden = !beats;
+        if (clipLengthValue) clipLengthValue.hidden = !!beats;
+      }
+
+      function setBpm(bpm, source) {
+        const n = typeof bpm === "number" ? bpm : parseDecimal(bpm);
+        if (n == null) return false;
+        const rounded = Math.round(n * 1000) / 1000;
+        if (rounded < BPM_MIN || rounded > BPM_MAX) return false;
+        state.bpm = rounded;
+        if (source === "user") {
+          state.bpmEdited = true;
+          state.bpmSource = "edited";
+        }
+        if (beatsModeActive()) setClipWindowSnapped(state.clipStart, state.clipEnd);
+        return true;
+      }
+
+      function setBeatOffset(offset, fromUser) {
+        if (!isFinite(offset)) return;
+        const dur = trackDuration();
+        const room = hasBeatGrid() ? barSeconds() : 1;
+        state.beatOffset = clamp(offset, -Math.min(1, room), Math.max(0, dur));
+        if (fromUser) {
+          state.bpmEdited = true;
+          if (state.bpmSource === "detected") state.bpmSource = "edited";
+        }
+        if (beatsModeActive()) setClipWindowSnapped(state.clipStart, state.clipEnd);
+      }
+
+      function applyDetectedTempo(tempo) {
+        if (state.bpmEdited) {
+          syncBeatUi();
+          return;
+        }
+        if (!tempo || !(tempo.bpm >= BPM_MIN && tempo.bpm <= BPM_MAX)) {
+          state.bpm = 0;
+          state.beatOffset = 0;
+          state.bpmSource = "none";
+          syncBeatUi();
+          return;
+        }
+        state.bpm = quantizeDetectedBpm(tempo.bpm);
+        state.beatOffset = tempo.offset || 0;
+        state.bpmSource = "detected";
+        syncBeatUi();
+      }
+
+      function setEditMode(mode) {
+        if (state.recording) return;
+        const next = mode === "beats" ? "beats" : "time";
+        if (next === "beats" && !hasBeatGrid()) return;
+        state.editMode = next;
+        if (!trackDuration()) {
+          syncBeatUi();
+          return;
+        }
+        if (next === "beats") {
+          setClipWindowSnapped(state.clipStart, state.clipEnd);
+        } else {
+          const dur = trackDuration();
+          const len = (state.clipEnd || 0) - (state.clipStart || 0);
+          const minL = minClipLength(dur);
+          const maxL = maxClipLength(dur);
+          if (len < minL - 1e-4 || len > maxL + 1e-4) {
+            setClipWindow(state.clipStart, state.clipStart + clamp(len, minL, maxL));
+          }
+        }
+        syncClipUi();
+      }
+
+      function setSnap(snap) {
+        if (snap !== "beat" && snap !== "bar") return;
+        if (state.recording) return;
+        state.snap = snap;
+        if (beatsModeActive()) setClipWindowSnapped(state.clipStart, state.clipEnd);
+        syncClipUi();
+      }
+
+      function applyBarPreset(bars) {
+        if (!beatsModeActive() || state.recording) return;
+        const wanted = bars * barSeconds();
+        setLengthFromStart(wanted);
+        const got = state.clipEnd - state.clipStart;
+        syncClipUi();
+        if (wanted - got > 0.05) {
+          setStatus("That many bars runs past 2 minutes, so the clip was shortened to " + formatLengthBarBeat(got) + " on the grid.", "ok");
+        }
+      }
+
+      // Onset peaks, then an inter-onset-interval histogram. A log-tempo
+      // prior around 120 BPM breaks the half/double tie a click track
+      // would otherwise leave open. Runs on the decoded buffer, offline.
+      function detectTempo(buffer) {
+        const sr = buffer.sampleRate;
+        const ch0 = buffer.getChannelData(0);
+        const ch1 = buffer.numberOfChannels > 1 ? buffer.getChannelData(1) : null;
+        const hop = 128;
+        const maxSamples = Math.min(ch0.length, Math.floor(sr * 40));
+        const n = Math.floor(maxSamples / hop);
+        if (n < 8) return null;
+        const env = new Float32Array(n);
+        for (let i = 0; i < n; i++) {
+          const a = i * hop;
+          const b = Math.min(maxSamples, a + hop);
+          let sum = 0;
+          for (let j = a; j < b; j++) {
+            let v = ch0[j];
+            if (ch1) v = (v + ch1[j]) * 0.5;
+            sum += v * v;
+          }
+          env[i] = Math.sqrt(sum / (b - a));
+        }
+        const onset = new Float32Array(n);
+        let prev = 0;
+        let peak = 0;
+        for (let i = 0; i < n; i++) {
+          const d = env[i] - prev;
+          const o = d > 0 ? d : 0;
+          onset[i] = o;
+          if (o > peak) peak = o;
+          prev = env[i];
+        }
+        if (peak < 1e-8) return null;
+        const sm = new Float32Array(n);
+        for (let i = 0; i < n; i++) {
+          let v = onset[i];
+          if (i) v += 0.35 * onset[i - 1];
+          if (i + 1 < n) v += 0.15 * onset[i + 1];
+          sm[i] = v / peak;
+        }
+        const hopSec = hop / sr;
+        const peaks = [];
+        for (let i = 1; i < n - 1; i++) {
+          if (sm[i] >= sm[i - 1] && sm[i] >= sm[i + 1] && sm[i] > 0.25) {
+            const a = sm[i - 1];
+            const b = sm[i];
+            const c = sm[i + 1];
+            const denom = a - 2 * b + c;
+            let delta = Math.abs(denom) > 1e-9 ? 0.5 * (a - c) / denom : 0;
+            if (delta > 0.5) delta = 0.5;
+            if (delta < -0.5) delta = -0.5;
+            peaks.push({ t: (i + delta) * hopSec, a: sm[i] });
+          }
+        }
+        if (peaks.length < 4) return null;
+        const minDt = 60 / 220;
+        const maxDt = 60 / 50;
+        const bins = new Map();
+        function addInterval(dt, w) {
+          if (dt < minDt || dt > maxDt) return;
+          const bpm = 60 / dt;
+          const key = Math.round(bpm * 2) / 2;
+          bins.set(key, (bins.get(key) || 0) + w);
+          bins.set(key - 0.5, (bins.get(key - 0.5) || 0) + w * 0.25);
+          bins.set(key + 0.5, (bins.get(key + 0.5) || 0) + w * 0.25);
+        }
+        for (let i = 0; i < peaks.length - 1; i++) {
+          addInterval(peaks[i + 1].t - peaks[i].t, 1);
+          if (i + 2 < peaks.length) addInterval(peaks[i + 2].t - peaks[i].t, 0.35);
+        }
+        if (!bins.size) return null;
+        function prior(bpm) {
+          const x = Math.log2(bpm / 120);
+          return Math.exp(-0.5 * x * x);
+        }
+        let bestBpm = 0;
+        let bestScore = -1;
+        bins.forEach(function (w, bpm) {
+          if (bpm < 50 || bpm > 220) return;
+          const score = w * prior(bpm);
+          if (score > bestScore) {
+            bestScore = score;
+            bestBpm = bpm;
+          }
+        });
+        if (!(bestBpm > 0)) return null;
+        let num = 0;
+        let den = 0;
+        bins.forEach(function (w, bpm) {
+          if (Math.abs(bpm - bestBpm) <= 1.5) {
+            const ww = w * prior(bpm);
+            num += bpm * ww;
+            den += ww;
+          }
+        });
+        const bpm = den ? num / den : bestBpm;
+        const period = 60 / bpm;
+        let ssin = 0;
+        let scos = 0;
+        const phases = [];
+        for (let i = 0; i < peaks.length; i++) {
+          const ph = ((peaks[i].t % period) + period) % period;
+          phases.push(ph);
+          const ang = (ph / period) * Math.PI * 2;
+          ssin += Math.sin(ang) * peaks[i].a;
+          scos += Math.cos(ang) * peaks[i].a;
+        }
+        let mean = Math.atan2(ssin, scos);
+        if (mean < 0) mean += Math.PI * 2;
+        mean = (mean / (Math.PI * 2)) * period;
+        function circ(a, b) {
+          const d = Math.abs(a - b);
+          return Math.min(d, period - d);
+        }
+        let offset = phases[0];
+        let bestD = circ(phases[0], mean);
+        for (let i = 1; i < phases.length; i++) {
+          const d = circ(phases[i], mean);
+          if (d < bestD) {
+            bestD = d;
+            offset = phases[i];
+          }
+        }
+        if (Math.min(offset, period - offset) < 0.02) offset = 0;
+        return { bpm: bpm, offset: offset };
       }
 
       // Moving one handle pushes or clamps the other so the window is
@@ -2268,6 +2906,7 @@
         if (dur <= 0 || state.recording) return;
         state.clipStart = 0;
         state.clipEnd = Math.min(dur, CONFIG.DEFAULT_CLIP);
+        if (beatsModeActive()) setClipWindowSnapped(state.clipStart, state.clipEnd);
         fitViewportToTrack();
         if (state.audioUrl) {
           try { audioEl.currentTime = state.clipStart; } catch (e) {}
@@ -2298,17 +2937,26 @@
           clipStartSlider.value = String(state.clipStart);
           clipEndSlider.value = String(state.clipEnd);
         }
-        clipStartValue.textContent = formatTimeFine(state.clipStart || 0);
-        clipEndValue.textContent = formatTimeFine(state.clipEnd || 0);
-        clipLengthValue.textContent = formatTimeFine(Math.max(0, (state.clipEnd || 0) - (state.clipStart || 0)));
+        const lengthSec = Math.max(0, (state.clipEnd || 0) - (state.clipStart || 0));
+        const beats = beatsModeActive();
+        clipStartValue.textContent = formatPosition(state.clipStart || 0);
+        clipEndValue.textContent = formatPosition(state.clipEnd || 0);
+        clipLengthValue.textContent = formatLength(lengthSec);
         if (clipStartInput && document.activeElement !== clipStartInput) {
-          clipStartInput.value = formatTimeFine(state.clipStart || 0);
+          clipStartInput.value = formatPosition(state.clipStart || 0);
         }
         if (clipEndInput && document.activeElement !== clipEndInput) {
-          clipEndInput.value = formatTimeFine(state.clipEnd || 0);
+          clipEndInput.value = formatPosition(state.clipEnd || 0);
+        }
+        if (clipLengthInput && document.activeElement !== clipLengthInput) {
+          clipLengthInput.value = beats ? formatLengthBarBeat(lengthSec) : formatTimeFine(lengthSec);
         }
         clipStartInput.disabled = locked;
         clipEndInput.disabled = locked;
+        if (clipLengthInput) clipLengthInput.disabled = locked || !beats;
+        clipStartInput.setAttribute("aria-label", beats ? "Clip start in bars and beats" : "Clip start time");
+        clipEndInput.setAttribute("aria-label", beats ? "Clip end in bars and beats" : "Clip end time");
+        syncBeatUi();
         updateWaveZoomButtons();
         drawWaveform();
         updateProgress();
@@ -2529,7 +3177,7 @@
       }
 
       function drawEdgeTag(t, side, time, y) {
-        const label = (side === "left" ? "◀ " : "") + formatTimeFine(time) + (side === "right" ? " ▶" : "");
+        const label = (side === "left" ? "◀ " : "") + formatPosition(time) + (side === "right" ? " ▶" : "");
         t.font = "700 11px \"IBM Plex Mono\", ui-monospace, monospace";
         const textW = t.measureText(label).width;
         const w = Math.ceil(textW + 22);
@@ -2547,7 +3195,61 @@
         return { x: x, y: ty, w: w, h: h, side: side, time: time };
       }
 
+      function drawBeatRuler(t, w, ruler, t0, t1) {
+        t.fillStyle = "#e4e4e4";
+        t.fillRect(0, 0, w, ruler);
+        t.fillStyle = "rgba(0, 0, 0, 0.12)";
+        t.fillRect(0, ruler - 1, w, 1);
+        const beat = beatSeconds();
+        if (!(beat > 0)) return;
+        const first = Math.ceil((t0 - state.beatOffset) / beat - 1e-9);
+        const last = Math.floor((t1 - state.beatOffset) / beat + 1e-9);
+        const spanBeats = (t1 - t0) / beat;
+        const showBeats = spanBeats <= 48;
+        const labelEvery = spanBeats > 64 ? 16 : (spanBeats > 32 ? 8 : 4);
+        t.font = "700 10px \"IBM Plex Mono\", ui-monospace, monospace";
+        t.textBaseline = "top";
+        t.textAlign = "left";
+        for (let i = first; i <= last; i++) {
+          const beatInBar = ((i % BEATS_PER_BAR) + BEATS_PER_BAR) % BEATS_PER_BAR;
+          const isBar = beatInBar === 0;
+          if (!showBeats && !isBar) continue;
+          const x = timeToWaveX(state.beatOffset + i * beat, w);
+          t.fillStyle = isBar ? "rgba(0, 0, 0, 0.75)" : "rgba(0, 0, 0, 0.28)";
+          t.fillRect(x, ruler - (isBar ? 8 : 4), 1, isBar ? 8 : 4);
+          if (isBar && i % labelEvery === 0) {
+            const barNo = Math.floor(i / BEATS_PER_BAR) + 1;
+            const label = String(barNo);
+            t.fillStyle = "rgba(0, 0, 0, 0.75)";
+            const lw = t.measureText(label).width;
+            let lx = x + 3;
+            if (lx + lw > w - 2) lx = x - lw - 3;
+            if (lx < 2) lx = 2;
+            t.fillText(label, lx, 3);
+          }
+        }
+      }
+
+      function drawBeatGridLines(t, w, waveY, waveH, t0, t1) {
+        const beat = beatSeconds();
+        if (!(beat > 0) || waveH <= 0) return;
+        const first = Math.ceil((t0 - state.beatOffset) / beat - 1e-9);
+        const last = Math.floor((t1 - state.beatOffset) / beat + 1e-9);
+        const showBeats = (last - first) <= 96;
+        for (let i = first; i <= last; i++) {
+          const isBar = ((i % BEATS_PER_BAR) + BEATS_PER_BAR) % BEATS_PER_BAR === 0;
+          if (!showBeats && !isBar) continue;
+          const x = timeToWaveX(state.beatOffset + i * beat, w);
+          t.fillStyle = isBar ? "rgba(0, 0, 0, 0.35)" : "rgba(0, 0, 0, 0.12)";
+          t.fillRect(x, waveY, 1, waveH);
+        }
+      }
+
       function drawRuler(t, w, ruler, t0, t1) {
+        if (beatsModeActive()) {
+          drawBeatRuler(t, w, ruler, t0, t1);
+          return;
+        }
         t.fillStyle = "#e4e4e4";
         t.fillRect(0, 0, w, ruler);
         t.fillStyle = "rgba(0, 0, 0, 0.12)";
@@ -2609,6 +3311,7 @@
         const waveH = layout.waveH;
 
         drawRuler(t, cssW, ruler, v0, v1);
+        if (beatsModeActive()) drawBeatGridLines(t, cssW, waveY, waveH, v0, v1);
 
         const start = state.clipStart || 0;
         const end = state.clipEnd || 0;
@@ -3372,6 +4075,7 @@
           if (clipEndInput) clipEndInput.disabled = locked;
           updateWaveZoomButtons();
         }
+        syncBeatUi();
       }
 
       function stopRecording() {
@@ -3677,6 +4381,46 @@
           setClipWindow(s, e);
           syncClipUi();
           return window.__dubplateStyle.getClip();
+        },
+        getBeat: function () {
+          const length = (state.clipEnd || 0) - (state.clipStart || 0);
+          return {
+            bpm: state.bpm,
+            offset: state.beatOffset,
+            source: state.bpmSource,
+            mode: state.editMode,
+            snap: state.snap,
+            barSeconds: state.bpm ? barSeconds() : 0,
+            beatSeconds: state.bpm ? beatSeconds() : 0,
+            start: state.clipStart,
+            end: state.clipEnd,
+            length: length,
+            startLabel: state.bpm ? formatBarBeat(state.clipStart || 0) : "",
+            endLabel: state.bpm ? formatBarBeat(state.clipEnd || 0) : "",
+            lengthLabel: state.bpm ? formatLengthBarBeat(length) : ""
+          };
+        },
+        setBpm: function (v) {
+          setBpm(v, "user");
+          syncClipUi();
+          return window.__dubplateStyle.getBeat();
+        },
+        setOffset: function (v) {
+          setBeatOffset(parseFloat(v), true);
+          syncClipUi();
+          return window.__dubplateStyle.getBeat();
+        },
+        setEditMode: function (m) {
+          setEditMode(m);
+          return window.__dubplateStyle.getBeat();
+        },
+        setSnap: function (s) {
+          setSnap(s);
+          return window.__dubplateStyle.getBeat();
+        },
+        setBars: function (n) {
+          applyBarPreset(parseInt(n, 10));
+          return window.__dubplateStyle.getBeat();
         }
       };
 
@@ -3750,16 +4494,37 @@
       });
 
       clipStartSlider.addEventListener("input", () => {
-        setClipStart(parseFloat(clipStartSlider.value));
+        applyClipStart(parseFloat(clipStartSlider.value));
         syncClipUi();
       });
       clipEndSlider.addEventListener("input", () => {
-        setClipEnd(parseFloat(clipEndSlider.value));
+        applyClipEnd(parseFloat(clipEndSlider.value));
         syncClipUi();
       });
 
       function commitTimeInput(which) {
-        const input = which === "end" ? clipEndInput : clipStartInput;
+        const input = which === "length" ? clipLengthInput : (which === "end" ? clipEndInput : clipStartInput);
+        if (which === "length") {
+          const len = parseLengthBarBeat(input.value);
+          if (len == null || !beatsModeActive()) {
+            syncClipUi();
+            return;
+          }
+          setLengthFromStart(len);
+          syncClipUi();
+          return;
+        }
+        if (beatsModeActive()) {
+          const pos = parseBarBeatPosition(input.value);
+          if (pos == null) {
+            syncClipUi();
+            return;
+          }
+          if (which === "end") setClipEndSnapped(pos);
+          else setClipStartSnapped(pos);
+          syncClipUi();
+          return;
+        }
         const parsed = parseTimeFine(input.value);
         if (parsed == null) {
           input.value = formatTimeFine(which === "end" ? state.clipEnd : state.clipStart);
@@ -3776,6 +4541,70 @@
       });
       clipEndInput.addEventListener("keydown", (e) => {
         if (e.key === "Enter") { e.preventDefault(); commitTimeInput("end"); clipEndInput.blur(); }
+      });
+      clipLengthInput.addEventListener("change", () => commitTimeInput("length"));
+      clipLengthInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") { e.preventDefault(); commitTimeInput("length"); clipLengthInput.blur(); }
+      });
+
+      function commitBpmInput() {
+        const n = parseDecimal(bpmInput.value);
+        if (n == null || !setBpm(n, "user")) {
+          syncBeatUi();
+          return;
+        }
+        syncClipUi();
+      }
+      bpmInput.addEventListener("change", commitBpmInput);
+      bpmInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") { e.preventDefault(); commitBpmInput(); bpmInput.blur(); }
+      });
+      bpmHalfBtn.addEventListener("click", () => {
+        if (!hasBeatGrid()) return;
+        if (setBpm(state.bpm / 2, "user")) syncClipUi();
+        else syncBeatUi();
+      });
+      bpmDoubleBtn.addEventListener("click", () => {
+        if (!hasBeatGrid()) return;
+        if (setBpm(state.bpm * 2, "user")) syncClipUi();
+        else syncBeatUi();
+      });
+      function commitOffsetInput() {
+        const n = parseDecimal(offsetInput.value);
+        if (n == null) {
+          syncBeatUi();
+          return;
+        }
+        setBeatOffset(n, true);
+        syncClipUi();
+      }
+      offsetInput.addEventListener("change", commitOffsetInput);
+      offsetInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") { e.preventDefault(); commitOffsetInput(); offsetInput.blur(); }
+      });
+      offsetBackBtn.addEventListener("click", () => {
+        setBeatOffset((state.beatOffset || 0) - OFFSET_NUDGE, true);
+        syncClipUi();
+      });
+      offsetFwdBtn.addEventListener("click", () => {
+        setBeatOffset((state.beatOffset || 0) + OFFSET_NUDGE, true);
+        syncClipUi();
+      });
+      editModeSeg.addEventListener("click", (e) => {
+        const btn = e.target.closest("button[data-edit-mode]");
+        if (!btn || btn.disabled) return;
+        setEditMode(btn.getAttribute("data-edit-mode"));
+      });
+      snapSeg.addEventListener("click", (e) => {
+        const btn = e.target.closest("button[data-snap]");
+        if (!btn || btn.disabled) return;
+        setSnap(btn.getAttribute("data-snap"));
+      });
+      document.querySelectorAll(".bar-preset").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          if (btn.disabled) return;
+          applyBarPreset(parseInt(btn.getAttribute("data-bars"), 10));
+        });
       });
 
       waveZoomIn.addEventListener("click", () => {
@@ -3831,8 +4660,8 @@
         const t = timeFromWaveX(e.clientX, false);
         if (kind === "start" || kind === "end") {
           wavePointer = { mode: kind };
-          if (kind === "start") setClipStart(t);
-          else setClipEnd(t);
+          if (kind === "start") applyClipStart(t);
+          else applyClipEnd(t);
           syncClipUi();
         } else if (kind === "region") {
           wavePointer = {
@@ -3853,16 +4682,16 @@
         maybeAutoScrollWhileDrag(e.clientX);
         const t = timeFromWaveX(e.clientX, false);
         if (wavePointer.mode === "start") {
-          setClipStart(t);
+          applyClipStart(t);
           syncClipUi();
         } else if (wavePointer.mode === "end") {
-          setClipEnd(t);
+          applyClipEnd(t);
           syncClipUi();
         } else if (wavePointer.mode === "region") {
           if (Math.abs(t - wavePointer.downTime) > 0.02) wavePointer.moved = true;
           if (wavePointer.moved) {
             const len = state.clipEnd - state.clipStart;
-            setClipWindow(t - wavePointer.grabOffset, t - wavePointer.grabOffset + len);
+            applyClipWindow(t - wavePointer.grabOffset, t - wavePointer.grabOffset + len);
             syncClipUi();
           }
         }
